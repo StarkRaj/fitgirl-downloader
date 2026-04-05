@@ -1,0 +1,5 @@
+/.venv
+/downloader.py
+/fetch_downloadable_links.py
+/start.bat
+/__pycache__

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitGirl Fetch</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1e1e1e;
+    --border-hover: #2e2e2e;
+    --text: #e8e6e0;
+    --muted: #5a5854;
+    --accent: #c8f064;
+    --accent-dim: rgba(200, 240, 100, 0.08);
+    --accent-mid: rgba(200, 240, 100, 0.15);
+    --danger: #ff5f57;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── header ── */
+  header {
+    padding: 2.5rem 2rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--muted); }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── main ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── input card ── */
+  .card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:focus-within {
+    border-color: var(--border-hover);
+  }
+
+  .input-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .url-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+  }
+
+  .url-input::placeholder {
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  .url-input:focus {
+    border-color: rgba(200, 240, 100, 0.3);
+  }
+
+  .btn-fetch {
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 8px;
+    padding: 0 1.25rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn-fetch:hover { opacity: 0.88; }
+  .btn-fetch:active { transform: scale(0.97); }
+  .btn-fetch:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-fetch svg { width: 14px; height: 14px; }
+
+  /* ── progress / state ── */
+  .state-area {
+    margin-top: 1.5rem;
+    min-height: 0;
+    transition: all 0.3s;
+  }
+
+  .progress-bar-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    height: 4px;
+    margin-bottom: 0.75rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 6px;
+  }
+
+  .state-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .state-text .pct { color: var(--accent); }
+
+  /* ── result ── */
+  .result-card {
+    display: none;
+    margin-top: 1.25rem;
+    background: var(--accent-dim);
+    border: 1px solid rgba(200, 240, 100, 0.15);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .result-card.visible { display: block; }
+  .result-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .result-cover-wrap {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: none;
+  }
+  .result-cover-wrap[data-visible="1"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .result-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+  }
+  .result-head-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .result-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+    word-break: break-word;
+    line-height: 1.35;
+  }
+  .result-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+  }
+  .result-meta span::before { content: '· '; }
+  .links-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .torrent-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .btn-download {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+  .btn-download:hover { background: var(--accent-mid); }
+  .hosts-section { margin-top: 0.25rem; }
+  .host-group { margin-bottom: 0.75rem; }
+  .host-name {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .host-toolbar { margin-bottom: 0.55rem; }
+  .btn-download-all {
+    background: var(--accent-dim);
+    border: 1px solid rgba(200, 240, 100, 0.35);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 0.4rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-download-all:hover { background: var(--accent-mid); border-color: rgba(200, 240, 100, 0.5); }
+  .btn-download-all:disabled { opacity: 0.45; cursor: not-allowed; }
+  .host-links { display: flex; flex-wrap: wrap; gap: 6px; }
+  .host-link {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .host-link:hover { border-color: var(--accent); color: var(--accent); }
+  .host-link .part-num { color: var(--muted); margin-left: 4px; font-size: 10px; }
+  .divider { border: none; border-top: 1px solid rgba(200,240,100,0.1); margin: 0.75rem 0; }
+  .no-direct { font-size: 12px; color: var(--muted); font-style: italic; }
+
+  .error-msg {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 95, 87, 0.07);
+    border: 1px solid rgba(255, 95, 87, 0.2);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--danger);
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* ── modal (matches card / accent system) ── */
+  .modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+  }
+  .modal-root.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 6, 6, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal-panel {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem 1.5rem 1.35rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  }
+  .modal-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.65rem;
+    line-height: 1.3;
+  }
+  .modal-body {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.55;
+    margin-bottom: 1.35rem;
+  }
+  .modal-body strong { font-weight: 500; color: var(--text); }
+  .modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .modal-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+    border: 1px solid transparent;
+  }
+  .modal-btn:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .modal-btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .modal-btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+  .modal-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0a;
+  }
+  .modal-btn-primary:hover { opacity: 0.9; }
+
+  /* ── recent ── */
+  .recent {
+    width: 100%;
+    max-width: 640px;
+    margin-top: 2rem;
+  }
+
+  .recent-header {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .recent-header button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .recent-header button:hover { opacity: 1; }
+
+  .recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .recent-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+
+  .recent-item:hover { border-color: var(--border-hover); }
+
+  .recent-name {
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  .recent-size {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .recent-dl {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .recent-dl:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── footer ── */
+  footer {
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    border-top: 1px solid var(--border);
+  }
+
+  footer span { color: rgba(90,88,84,0.4); }
+
+  /* ── spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 1.5px solid rgba(10,10,10,0.2);
+    border-top-color: #0a0a0a;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* empty state */
+  .empty-recent {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    padding: 1rem;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 480px) {
+    .input-row { flex-direction: column; }
+    .btn-fetch { justify-content: center; padding: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">FitGirl<span>/</span>Fetch</div>
+  <div class="status-dot" title="Online"></div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Drop a URL,<br>grab the <em>game.</em></h1>
+    <p>Paste any FitGirl Repacks link to begin</p>
+  </div>
+
+  <div class="card">
+    <label class="input-label" for="urlInput">Game URL</label>
+    <div class="input-row">
+      <input
+        type="url"
+        id="urlInput"
+        class="url-input"
+        placeholder="https://fitgirl-repacks.site/..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="btn-fetch" id="fetchBtn" onclick="handleFetch()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M8 1v10M4 7l4 4 4-4"/><path d="M2 13h12"/>
+        </svg>
+        Fetch
+      </button>
+    </div>
+
+    <div class="state-area" id="stateArea" style="display:none;">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="state-text">
+        <span id="stateMsg">Parsing page...</span>
+        <span class="pct" id="statePct">0%</span>
+      </div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-head">
+        <div class="result-cover-wrap" id="resultCoverWrap" data-visible="0" aria-hidden="true">
+          <img class="result-cover" id="resultCoverImg" alt="" width="80" height="80" decoding="async" />
+        </div>
+        <div class="result-head-text">
+          <div class="result-title" id="resultTitle">—</div>
+          <div class="result-meta" id="resultMeta"></div>
+        </div>
+      </div>
+      <div class="links-label" id="torrentLabel" style="display:none;">Torrent / Magnet</div>
+      <div class="torrent-row" id="torrentRow"></div>
+      <div id="directSection" style="display:none;">
+        <hr class="divider">
+        <div class="links-label">Direct Downloads</div>
+        <div class="hosts-section" id="hostsSection"></div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="recent" id="recentSection">
+    <div class="recent-header">
+      <span>Recent</span>
+      <button onclick="clearRecent()">Clear</button>
+    </div>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+</main>
+
+<footer>
+  For personal use only <span>·</span> Respect copyright laws <span>·</span> FitGirl Repacks
+</footer>
+
+<div id="modalRoot" class="modal-root" aria-hidden="true">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitleEl">
+    <h2 class="modal-title" id="modalTitleEl"></h2>
+    <p class="modal-body" id="modalBodyEl"></p>
+    <div class="modal-actions" id="modalActionsConfirm">
+      <button type="button" class="modal-btn modal-btn-ghost" id="modalBtnCancel">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-primary" id="modalBtnConfirmOk">Download</button>
+    </div>
+    <div class="modal-actions" id="modalActionsAlert" hidden>
+      <button type="button" class="modal-btn modal-btn-primary" id="modalBtnAlertOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+
+// Trigger a native browser download with the real CDN URL.
+// Extensions (IDM, FDM) intercept this and download at full speed.
+function triggerDownload(cdnUrl) {
+  const a = document.createElement('a');
+  a.href = cdnUrl;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 1000);
+}
+
+// Call backend /download and trigger download with the returned direct URL.
+async function resolveAndDownload(ffPageUrl) {
+  const res  = await fetch(`${API_BASE}/download?url=${encodeURIComponent(ffPageUrl)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Resolve failed');
+  const directUrl = data.download_url || data.direct_url;
+  if (!directUrl) throw new Error('No download URL returned');
+  triggerDownload(directUrl);
+  return directUrl;
+}
+
+const $ = id => document.getElementById(id);
+let currentMagnet = null;
+
+/* ── themed modal (replaces confirm / alert) ── */
+let _modalPending = null;
+
+function _closeModal(result) {
+  const root = $('modalRoot');
+  if (!root || !root.classList.contains('is-open')) return;
+  root.classList.remove('is-open');
+  root.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  const p = _modalPending;
+  _modalPending = null;
+  if (!p) return;
+  if (p.type === 'confirm') p.resolve(!!result);
+  else p.resolve();
+}
+
+function showModalConfirm({ title, message, okText = 'OK', cancelText = 'Cancel' }) {
+  return new Promise((resolve) => {
+    _modalPending = { type: 'confirm', resolve };
+    $('modalTitleEl').textContent = title;
+    $('modalBodyEl').textContent = message;
+    $('modalBtnConfirmOk').textContent = okText;
+    $('modalBtnCancel').textContent = cancelText;
+    $('modalActionsConfirm').hidden = false;
+    $('modalActionsAlert').hidden = true;
+    const root = $('modalRoot');
+    root.classList.add('is-open');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    $('modalBtnConfirmOk').focus();
+  });
+}
+
+function showModalAlert({ title, message, okText = 'OK' }) {
+  return new Promise((resolve) => {
+    _modalPending = { type: 'alert', resolve };
+    $('modalTitleEl').textContent = title;
+    $('modalBodyEl').textContent = message;
+    $('modalBtnAlertOk').textContent = okText;
+    $('modalActionsConfirm').hidden = true;
+    $('modalActionsAlert').hidden = false;
+    const root = $('modalRoot');
+    root.classList.add('is-open');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    $('modalBtnAlertOk').focus();
+  });
+}
+
+(function bindModal() {
+  const root = $('modalRoot');
+  if (!root || root.dataset.bound) return;
+  root.dataset.bound = '1';
+  $('modalBackdrop').addEventListener('click', () => _closeModal(false));
+  $('modalBtnCancel').addEventListener('click', () => _closeModal(false));
+  $('modalBtnConfirmOk').addEventListener('click', () => _closeModal(true));
+  $('modalBtnAlertOk').addEventListener('click', () => _closeModal());
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !root.classList.contains('is-open')) return;
+    e.preventDefault();
+    _closeModal(false);
+  });
+})();
+
+function setProgress(pct, msg) {
+  $('progressBar').style.width = pct + '%';
+  $('stateMsg').textContent = msg;
+  $('statePct').textContent = pct + '%';
+}
+
+function showError(msg) {
+  const el = $('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function clearUI() {
+  $('errorMsg').classList.remove('visible');
+  $('resultCard').classList.remove('visible');
+  $('errorMsg').textContent = '';
+  currentMagnet = null;
+  const cw = $('resultCoverWrap');
+  const ci = $('resultCoverImg');
+  if (cw && ci) {
+    cw.dataset.visible = '0';
+    cw.setAttribute('aria-hidden', 'true');
+    ci.removeAttribute('src');
+    ci.alt = '';
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function pollStatus(jobId) {
+  for (let i = 0; i < 20; i++) {
+    await sleep(2000);
+    setProgress(Math.min(30 + i * 3, 90), 'Scraping page...');
+    const res = await fetch(`${API_BASE}/status/${jobId}`);
+    if (!res.ok) throw new Error('Lost track of job — server may be down.');
+    const job = await res.json();
+    if (job.status === 'done')  return job;
+    if (job.status === 'error') throw new Error(job.error || 'Worker failed.');
+  }
+  throw new Error('Timed out after 40s — try again.');
+}
+
+/**
+ * Prepares each FuckingFast URL (resolve landing pages if needed), then triggers downloads with a short stagger.
+ */
+async function downloadAllFuckingFastParts(urls, ffEntries) {
+  const n = urls.length;
+  if (n < 2) return;
+  const ok = await showModalConfirm({
+    title: 'Download all parts',
+    message:
+      `Start ${n} downloads in a row. Your browser may ask to allow multiple files or pop-ups for this site — approve if you want every part.`,
+    okText: 'Start downloads',
+    cancelText: 'Cancel',
+  });
+  if (!ok) return;
+
+  const hrefs = [];
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i];
+    const pageReferer = ffEntries && ffEntries[i] && ffEntries[i].page_url
+      ? ffEntries[i].page_url
+      : null;
+    const isFF = url.includes('fuckingfast.co') || url.includes('ff.io');
+    const isCDN = /\.(rar|zip|7z|iso|bin)(\?|$)/i.test(url.split('#')[0]);
+
+    function proxyHref(cdnUrl, fname, refererOverride) {
+      const ref = refererOverride != null ? refererOverride : pageReferer;
+      let h = `${API_BASE}/download?url=${encodeURIComponent(cdnUrl)}`;
+      // let h = `${API_BASE}/download?url=${encodeURIComponent(cdnUrl)}&filename=${encodeURIComponent(fname)}`;
+      if (ref) h += `&referer=${encodeURIComponent(ref)}`;
+      return h;
+    }
+
+    try {
+      if (isFF && !isCDN) {
+        const res  = await fetch(`${API_BASE}/download?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Resolve failed');
+        const directUrl = data.download_url || data.direct_url;
+        if (!directUrl) throw new Error('No download URL returned');
+        hrefs.push(directUrl);
+      } else if (isCDN) {
+        hrefs.push(url);
+      } else {
+        hrefs.push({ open: url });
+      }
+    } catch (err) {
+      await showModalAlert({
+        title: 'Download stopped',
+        message: `Could not prepare part ${i + 1}: ${err.message || err}`,
+        okText: 'OK',
+      });
+      return;
+    }
+  }
+
+  hrefs.forEach((item, idx) => {
+    window.setTimeout(() => {
+      if (typeof item === 'string') {
+        triggerDownload(item);   // real CDN URL — extensions intercept this correctly
+      } else if (item && item.open) {
+        window.open(item.open, '_blank', 'noopener,noreferrer');
+      }
+    }, idx * 750);
+  });
+}
+
+async function handleFetch() {
+  const url = $('urlInput').value.trim();
+  if (!url) { showError('Please enter a URL.'); return; }
+
+  clearUI();
+
+  const btn = $('fetchBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Fetching`;
+
+  $('stateArea').style.display = 'block';
+  setProgress(10, 'Queuing job...');
+
+  try {
+    // 1. enqueue
+    const res = await fetch(`${API_BASE}/fetch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+
+    const init = await res.json();
+    if (!res.ok) throw new Error(init.error || `Server error ${res.status}`);
+
+    setProgress(20, 'Job queued — waiting for worker...');
+
+    // 2. poll until done
+    const job = await pollStatus(init.job_id);
+
+    setProgress(100, 'Done');
+
+    // 3. render result
+    renderResult(job);
+    const ff0 = job.by_host?.FuckingFast?.[0]
+      || (job.direct_links || []).find(e => e.host === 'FuckingFast')?.url
+      || '#';
+    addToRecent(job.title, job.repack_size, ff0);
+
+  } catch (err) {
+    setProgress(0, 'Failed');
+    showError(err.message || 'Something went wrong.');
+    $('stateArea').style.display = 'none';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+        <path d="M8 1v10M4 7l4 4 4-4"/><path d="M2 13h12"/>
+      </svg>
+      Fetch`;
+  }
+}
+
+function renderResult(job) {
+  $('resultTitle').textContent = job.title;
+
+  const cw = $('resultCoverWrap');
+  const ci = $('resultCoverImg');
+  ci.onload = null;
+  ci.onerror = null;
+  if (job.cover_url) {
+    ci.alt = job.title ? `${job.title} — cover` : 'Game cover';
+    cw.dataset.visible = '0';
+    cw.setAttribute('aria-hidden', 'true');
+    ci.onerror = () => {
+      cw.dataset.visible = '0';
+      cw.setAttribute('aria-hidden', 'true');
+      ci.removeAttribute('src');
+    };
+    ci.onload = () => {
+      cw.dataset.visible = '1';
+      cw.setAttribute('aria-hidden', 'false');
+    };
+    ci.src = job.cover_url;
+  } else {
+    cw.dataset.visible = '0';
+    cw.setAttribute('aria-hidden', 'true');
+    ci.removeAttribute('src');
+    ci.alt = '';
+  }
+
+  const meta = [];
+  if (job.repack_size)   meta.push(`Repack: ${job.repack_size}`);
+  if (job.original_size) meta.push(`Original: ${job.original_size}`);
+  if (job.genre)         meta.push(job.genre.slice(0, 40));
+  $('resultMeta').innerHTML = meta.map(m => `<span>${m}</span>`).join('');
+
+  // ── torrent / magnet row (disabled — FF-only backend) ──
+  const torrentRow = $('torrentRow');
+  torrentRow.innerHTML = '';
+  // const dlIcon = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 1v10M4 7l4 4 4-4"/><path d="M2 13h12"/></svg>`;
+  // if (job.magnets?.length) {
+  //   job.magnets.forEach((m, i) => {
+  //     const btn = document.createElement('a');
+  //     btn.className = 'btn-download';
+  //     btn.href = m;
+  //     btn.innerHTML = `${dlIcon} Magnet${job.magnets.length > 1 ? ' ' + (i+1) : ''}`;
+  //     torrentRow.appendChild(btn);
+  //   });
+  // }
+  // if (job.torrents?.length) {
+  //   job.torrents.forEach((t, i) => {
+  //     const btn = document.createElement('a');
+  //     btn.className = 'btn-download';
+  //     btn.href = t;
+  //     btn.target = '_blank';
+  //     btn.innerHTML = `${dlIcon} Torrent${job.torrents.length > 1 ? ' ' + (i+1) : ''}`;
+  //     torrentRow.appendChild(btn);
+  //   });
+  // }
+  $('torrentLabel').style.display = 'none';
+
+  // ── direct download hosts ──
+  const byHost = job.by_host || {};
+  const hostKeys = Object.keys(byHost);
+  const directSection = $('directSection');
+  const hostsSection  = $('hostsSection');
+  hostsSection.innerHTML = '';
+
+  const directEntries = job.direct_links || [];
+
+  if (hostKeys.length) {
+    directSection.style.display = 'block';
+    hostKeys.forEach(host => {
+      const ffEntries = host === 'FuckingFast'
+        ? directEntries.filter(e => e.host === 'FuckingFast')
+        : null;
+      const urls = byHost[host];
+      const group = document.createElement('div');
+      group.className = 'host-group';
+      const hostName = document.createElement('div');
+      hostName.className = 'host-name';
+      hostName.textContent = host;
+      group.appendChild(hostName);
+
+      if (host === 'FuckingFast' && urls.length >= 2) {
+        const toolbar = document.createElement('div');
+        toolbar.className = 'host-toolbar';
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.className = 'btn-download-all';
+        allBtn.textContent = 'Download all parts';
+        allBtn.addEventListener('click', () => {
+          downloadAllFuckingFastParts(urls, ffEntries);
+        });
+        toolbar.appendChild(allBtn);
+        group.appendChild(toolbar);
+      }
+
+      const linkRow = document.createElement('div');
+      linkRow.className = 'host-links';
+      urls.forEach((url, i) => {
+        const a = document.createElement('a');
+        a.className = 'host-link';
+        a.rel = 'noopener noreferrer';
+
+        const label = urls.length > 1
+          ? `Part ${i + 1}<span class="part-num">#${i + 1}</span>`
+          : 'Open';
+
+        const pageReferer = ffEntries && ffEntries[i] && ffEntries[i].page_url
+          ? ffEntries[i].page_url
+          : null;
+
+        function downloadProxyHref(cdnUrl, fname, refererOverride) {
+          const ref = refererOverride != null ? refererOverride : pageReferer;
+          let h = `${API_BASE}/download?url=${encodeURIComponent(cdnUrl)}&filename=${encodeURIComponent(fname)}`;
+          if (ref) h += `&referer=${encodeURIComponent(ref)}`;
+          return h;
+        }
+
+        const isFF = url.includes('fuckingfast.co') || url.includes('ff.io');
+        const isCDN = /\.(rar|zip|7z|iso|bin)(\?|$)/i.test(url.split('#')[0]);
+
+        if (isFF && !isCDN) {
+          a.href = '#';
+          a.innerHTML = label;
+          a.onclick = async (e) => {
+            e.preventDefault();
+            a.innerHTML = urls.length > 1 ? `Resolving ${i + 1}…` : 'Resolving…';
+            a.style.opacity = '0.5';
+            try {
+              await resolveAndDownload(url);
+              a.innerHTML = label;
+              a.style.opacity = '';
+            } catch (err) {
+              a.innerHTML = 'Failed';
+              a.style.color = 'var(--danger)';
+              a.title = err.message;
+            }
+          };
+        } else if (isCDN) {
+          // Already a direct CDN URL — trigger download immediately
+          a.href = '#';
+          a.innerHTML = label;
+          a.onclick = (e) => { e.preventDefault(); triggerDownload(url); };
+        } else {
+          a.href = url;
+          a.target = '_blank';
+          a.innerHTML = label;
+        }
+
+        linkRow.appendChild(a);
+      });
+      group.appendChild(linkRow);
+      hostsSection.appendChild(group);
+    });
+  } else {
+    directSection.style.display = 'none';
+  }
+
+  if (!hostKeys.length) {
+    hostsSection.innerHTML = '<div class="no-direct">No FuckingFast links found on this page.</div>';
+    directSection.style.display = 'block';
+  }
+
+  $('resultCard').classList.add('visible');
+}
+
+$('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleFetch();
+});
+
+// ── Recent ──
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem('fg_recent') || '[]'); }
+  catch { return []; }
+}
+
+function saveRecent(list) {
+  try { localStorage.setItem('fg_recent', JSON.stringify(list)); }
+  catch {}
+}
+
+function addToRecent(title, size, link) {
+  let list = getRecent();
+  list = list.filter(i => i.link !== link);
+  list.unshift({ title, size, link, ts: Date.now() });
+  if (list.length > 6) list = list.slice(0, 6);
+  saveRecent(list);
+  renderRecent();
+}
+
+function clearRecent() {
+  saveRecent([]);
+  renderRecent();
+}
+
+function renderRecent() {
+  const list = getRecent();
+  const container = $('recentList');
+  const section = $('recentSection');
+
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-recent">No recent downloads</div>';
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  container.innerHTML = list.map(item => `
+    <div class="recent-item">
+      <span class="recent-name" title="${item.title}">${item.title}</span>
+      ${item.size ? `<span class="recent-size">${item.size}</span>` : ''}
+      <button class="recent-dl" onclick="window.open('${item.link}','_blank')">Open</button>
+    </div>
+  `).join('');
+}
+
+renderRecent();
+</script>
+</body>
+</html>
