@@ -492,6 +492,7 @@ def proxy_download():
     """Stream a remote file through the local server so the browser saves it directly."""
     target_url = request.args.get("url", "").strip()
     download_url = fitgirl_fetcher.fetch_file_url(target_url)
+    print(download_url)
     return jsonify({"download_url": download_url})
 
 
