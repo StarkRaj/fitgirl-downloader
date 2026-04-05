@@ -4,6 +4,7 @@ Run:  python server.py
 """
 
 import html as html_module
+import logging
 import re
 import time
 import uuid
@@ -420,11 +421,13 @@ def evict_old_jobs():
 
 app = Flask(__name__)
 CORS(app)
+app.logger.setLevel(logging.INFO)
 
 @app.post("/fetch")
 def post_fetch():
     body = request.get_json(silent=True) or {}
     url  = (body.get("url") or "").strip()
+    app.logger.info("Fetching URL: %s", url)
     if not url:
         return jsonify({"error": "Missing url"}), 400
     try:
@@ -492,7 +495,7 @@ def proxy_download():
     """Stream a remote file through the local server so the browser saves it directly."""
     target_url = request.args.get("url", "").strip()
     download_url = fitgirl_fetcher.fetch_file_url(target_url)
-    print(download_url)
+    app.logger.info("Download URL: %s", download_url)
     return jsonify({"download_url": download_url})
 
 

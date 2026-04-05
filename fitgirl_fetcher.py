@@ -21,7 +21,11 @@ class FitgirlFetcher:
 
     def fetch_file_url(self, page_url):
         # Send a GET request to the website
-        response = requests.get(page_url, timeout=10)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        response = requests.get(page_url, timeout=10, headers=headers)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             script_tags = soup.find_all('script')
