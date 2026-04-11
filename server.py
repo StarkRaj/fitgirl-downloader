@@ -3,6 +3,7 @@ FitGirl Fetch — Flask local server
 Run:  python server.py
 """
 
+import asyncio
 import html as html_module
 import logging
 import re
@@ -494,7 +495,8 @@ def _allowed_referer(referer: str) -> bool:
 def proxy_download():
     """Stream a remote file through the local server so the browser saves it directly."""
     target_url = request.args.get("url", "").strip()
-    download_url = fitgirl_fetcher.fetch_file_url(target_url)
+    # download_url = fitgirl_fetcher.fetch_file_url(target_url)
+    download_url = asyncio.run(fitgirl_fetcher._extract_download_link(target_url))
     app.logger.info("Download URL: %s", download_url)
     return jsonify({"download_url": download_url})
 
