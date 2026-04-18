@@ -53,7 +53,9 @@ class FitgirlFetcher:
     def get_file_url_torrent(self, url: str) -> str:
         session = get_tor_session()
         response = session.get(url, timeout=10)
+        print(response)
         if response.status_code == 200:
+            print(response.text)
             soup = BeautifulSoup(response.text, 'html.parser')
             script_tags = soup.find_all('script')
 
