@@ -9,8 +9,8 @@ from playwright_stealth import Stealth
 def get_tor_session():
     session = requests.session()
     # Tor uses the 9050 port as the default socks port
-    session.proxies = {'http':  'socks5h://127.0.0.1:9050',
-                       'https': 'socks5h://127.0.0.1:9050'}
+    session.proxies = {'http':  'socks5h://127.0.0.1:10050',
+                       'https': 'socks5h://127.0.0.1:10050'}
     return session
 
 class FitgirlFetcher:
