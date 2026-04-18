@@ -1,10 +1,13 @@
 import re
-import asyncio
-import random
 import requests
 from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
-from playwright_stealth import Stealth
+# import asyncio
+# import random
+# from playwright.async_api import async_playwright
+# from playwright_stealth import Stealth
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_tor_session():
     session = requests.session()
@@ -28,9 +31,10 @@ class FitgirlFetcher:
                     download_links.append(href)
             return download_links
         else:
-            print(f"Failed to retrieve the page. Status code: {response.status_code}")
+            logger.info(f"Failed to retrieve the page. Status code: {response.status_code}")
 
     def fetch_file_url(self, page_url):
+        logger.info(f"Fetching file URL from: {page_url}")
         # Send a GET request to the website
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -53,9 +57,8 @@ class FitgirlFetcher:
     def get_file_url_torrent(self, url: str) -> str:
         session = get_tor_session()
         response = session.get(url, timeout=10)
-        print(response)
         if response.status_code == 200:
-            print(response.text)
+            logger.info(f"Response text: {response.text}")
             soup = BeautifulSoup(response.text, 'html.parser')
             script_tags = soup.find_all('script')
 
@@ -66,105 +69,105 @@ class FitgirlFetcher:
                     if matches:
                         return matches[0]
         else:
-            print(f"Failed to retrieve the page. Status code: {response.status_code}")
+            logger.error(f"Failed to retrieve the page. Status code: {response.status_code}")
 
-    async def _extract_download_link(self, url: str) -> str:
-        """Internal function to extract download link with improved stealth"""
-        async with async_playwright() as p:
-            width = random.randint(1280, 1920)
-            height = random.randint(800, 1080)
+    # async def _extract_download_link(self, url: str) -> str:
+    #     """Internal function to extract download link with improved stealth"""
+    #     async with async_playwright() as p:
+    #         width = random.randint(1280, 1920)
+    #         height = random.randint(800, 1080)
             
-            browser = await p.chromium.launch(
-                headless=True,
-                args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-features=IsolateOrigins,site-per-process'
-                ]
-            )
+    #         browser = await p.chromium.launch(
+    #             headless=True,
+    #             args=[
+    #                 '--disable-blink-features=AutomationControlled',
+    #                 '--disable-features=IsolateOrigins,site-per-process'
+    #             ]
+    #         )
             
-            context = await browser.new_context(
-                viewport={'width': width, 'height': height},
-                user_agent='Mozilla/5.0 ... Chrome/121...',
-                locale='en-US',
-                timezone_id='Asia/Kolkata',
-                has_touch=False,
-                extra_http_headers={
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Upgrade-Insecure-Requests": "1"
-                }
-            )
+    #         context = await browser.new_context(
+    #             viewport={'width': width, 'height': height},
+    #             user_agent='Mozilla/5.0 ... Chrome/121...',
+    #             locale='en-US',
+    #             timezone_id='Asia/Kolkata',
+    #             has_touch=False,
+    #             extra_http_headers={
+    #                 "Accept-Language": "en-US,en;q=0.9",
+    #                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    #                 "Upgrade-Insecure-Requests": "1"
+    #             }
+    #         )
             
-            page = await context.new_page()
-            await page.mouse.move(100, 200)
-            await page.wait_for_timeout(random.randint(1000, 3000))
-            await page.mouse.wheel(0, 500)
+    #         page = await context.new_page()
+    #         await page.mouse.move(100, 200)
+    #         await page.wait_for_timeout(random.randint(1000, 3000))
+    #         await page.mouse.wheel(0, 500)
             
-            stealth = Stealth()
-            await stealth.apply_stealth_async(page)
+    #         stealth = Stealth()
+    #         await stealth.apply_stealth_async(page)
             
-            await asyncio.sleep(random.uniform(0.5, 1.5))
+    #         await asyncio.sleep(random.uniform(0.5, 1.5))
             
-            try:
-                # Navigate with extended timeout
-                await page.goto(url, wait_until='networkidle', timeout=60000)
+    #         try:
+    #             # Navigate with extended timeout
+    #             await page.goto(url, wait_until='networkidle', timeout=60000)
                 
-                # Check for rate limiting
-                rate_limited = await page.evaluate("""() => {
-                    return document.body.textContent.includes('rate limited') || 
-                        document.body.textContent.includes('Rate Limit') ||
-                        document.body.textContent.includes('Too many requests');
-                }""")
+    #             # Check for rate limiting
+    #             rate_limited = await page.evaluate("""() => {
+    #                 return document.body.textContent.includes('rate limited') || 
+    #                     document.body.textContent.includes('Rate Limit') ||
+    #                     document.body.textContent.includes('Too many requests');
+    #             }""")
                 
-                if rate_limited:
-                    await browser.close()
-                    raise Exception("Rate limiting detected")
+    #             if rate_limited:
+    #                 await browser.close()
+    #                 raise Exception("Rate limiting detected")
                 
-                # Add slight delay to let any scripts initialize
-                await asyncio.sleep(random.uniform(1, 2))
+    #             # Add slight delay to let any scripts initialize
+    #             await asyncio.sleep(random.uniform(1, 2))
                 
-                download_link = await page.evaluate("""() => {
-                    const scripts = document.querySelectorAll('script');
-                    let dlLink = null;
+    #             download_link = await page.evaluate("""() => {
+    #                 const scripts = document.querySelectorAll('script');
+    #                 let dlLink = null;
                     
-                    for (const script of scripts) {
-                        const content = script.textContent || script.innerText;
-                        if (!content) continue;
+    #                 for (const script of scripts) {
+    #                     const content = script.textContent || script.innerText;
+    #                     if (!content) continue;
                         
-                        if (content.includes('function download()')) {
-                            // Try multiple regex patterns
-                            let match = content.match(/window\\.open\\("(https:\\/\\/fuckingfast\\.co\\/dl\\/[^"]+)"/);
-                            if (!match) {
-                                match = content.match(/window\.open\("(https:\/\/fuckingfast\.co\/dl\/[^"]+)"/);
-                            }
-                            if (match && match[1]) {
-                                dlLink = match[1];
-                                break;
-                            }
-                        }
-                    }
+    #                     if (content.includes('function download()')) {
+    #                         // Try multiple regex patterns
+    #                         let match = content.match(/window\\.open\\("(https:\\/\\/fuckingfast\\.co\\/dl\\/[^"]+)"/);
+    #                         if (!match) {
+    #                             match = content.match(/window\.open\("(https:\/\/fuckingfast\.co\/dl\/[^"]+)"/);
+    #                         }
+    #                         if (match && match[1]) {
+    #                             dlLink = match[1];
+    #                             break;
+    #                         }
+    #                     }
+    #                 }
 
-                    // Fallback: look for download button or direct link
-                    if (!dlLink) {
-                        const downloadBtns = [...document.querySelectorAll('a[href*="fuckingfast.co/dl/"]')];
-                        if (downloadBtns.length > 0) {
-                            dlLink = downloadBtns[0].href;
-                        }
-                    }
+    #                 // Fallback: look for download button or direct link
+    #                 if (!dlLink) {
+    #                     const downloadBtns = [...document.querySelectorAll('a[href*="fuckingfast.co/dl/"]')];
+    #                     if (downloadBtns.length > 0) {
+    #                         dlLink = downloadBtns[0].href;
+    #                     }
+    #                 }
 
-                    return dlLink;
-                }""")
+    #                 return dlLink;
+    #             }""")
                 
-                await browser.close()
+    #             await browser.close()
                 
-                if not download_link:
-                    return "Download link not found"
+    #             if not download_link:
+    #                 return "Download link not found"
                     
-                return download_link
+    #             return download_link
                 
-            except Exception as e:
-                await browser.close()
-                raise
+    #         except Exception as e:
+    #             await browser.close()
+    #             raise
 
 # if __name__ == "__main__":
 #     fetcher = FitgirlFetcher()

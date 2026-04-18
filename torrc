@@ -1,3 +1,6 @@
 SOCKSPort 10050
 ControlPort 10051
 CookieAuthentication 0
+
+MaxCircuitDirtiness 30
+NewCircuitPeriod 15

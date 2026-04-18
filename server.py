@@ -422,7 +422,12 @@ def evict_old_jobs():
 
 app = Flask(__name__)
 CORS(app)
-app.logger.setLevel(logging.INFO)
+# app.logger.setLevel(logging.INFO)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 
 @app.post("/fetch")
 def post_fetch():
@@ -495,6 +500,7 @@ def _allowed_referer(referer: str) -> bool:
 def proxy_download():
     """Stream a remote file through the local server so the browser saves it directly."""
     target_url = request.args.get("url", "").strip()
+    # download_url = fitgirl_fetcher.fetch_file_url(target_url)
     download_url = fitgirl_fetcher.get_file_url_torrent(target_url)
     # download_url = asyncio.run(fitgirl_fetcher._extract_download_link(target_url))
     app.logger.info("Download URL: %s", download_url)
@@ -507,4 +513,4 @@ if __name__ == "__main__":
     threading.Thread(target=worker_loop, daemon=True).start()
     print("  FitGirl Fetch running on http://localhost:8000")
     print(f"  Max concurrent workers: {MAX_CONCURRENT_WORKERS}")
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    app.run(host="0.0.0.0", port=8000, debug=True)
