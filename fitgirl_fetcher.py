@@ -6,6 +6,13 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
+def get_tor_session():
+    session = requests.session()
+    # Tor uses the 9050 port as the default socks port
+    session.proxies = {'http':  'socks5h://127.0.0.1:9050',
+                       'https': 'socks5h://127.0.0.1:9050'}
+    return session
+
 class FitgirlFetcher:
     def fetch_downloadable_links(self, url, server_name = "fuckingfast"):
         response = requests.get(url, timeout=10)
@@ -30,6 +37,22 @@ class FitgirlFetcher:
             "Accept-Language": "en-US,en;q=0.9",
         }
         response = requests.get(page_url, timeout=10, headers=headers)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            script_tags = soup.find_all('script')
+
+            for script in script_tags:
+                if script.string:  # Ensure the script has content
+                    # Use regex to find window.open links
+                    matches = re.findall(r'window\.open\(["\'](.*?)["\']', script.string)
+                    if matches:
+                        return matches[0]
+        else:
+            print(f"Failed to retrieve the page. Status code: {response.status_code}")
+
+    def get_file_url_torrent(self, url: str) -> str:
+        session = get_tor_session()
+        response = session.get(url, timeout=10)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             script_tags = soup.find_all('script')

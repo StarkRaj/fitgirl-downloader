@@ -4,3 +4,4 @@ requests==2.32.3
 beautifulsoup4==4.13.3
 playwright-stealth
 playwright
+requests[socks]
